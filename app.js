@@ -129,5 +129,6 @@ focus:              ${stat_focus()}
 console.clear();
 await ask_pokemon();
 await get_pokemon();
+
 console.clear();
 await form_response();
