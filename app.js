@@ -1,6 +1,8 @@
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 
+import natures from './natures.js';
+
 let pokemon_name;
 const stats = {};
 const stat_tracker = [];
@@ -66,6 +68,36 @@ function nextBiggest(arr) {
     return arr[1];
 }
 
+function find_worst_stat(attack, defense, sp_attack, sp_defense, speed){
+    const arr = [attack, defense, sp_attack, sp_defense, speed];
+    const min = Math.min(...arr);
+    const result = [];
+
+    for(let val of arr){
+        if(val === min){
+            switch(val){
+                case attack:
+                    result.push("attack");
+                    break;
+                case defense:
+                    result.push("defense");
+                    break;
+                case sp_attack:
+                    result.push("special-attack");
+                    break;
+                case sp_defense:
+                    result.push("special-defense");
+                    break;
+                case speed:
+                    result.push("speed");
+                    break;
+            }
+        }
+    }
+
+    stats["ignorable"] = result;
+}
+
 function stat_focus(){
     const hp = stats["hp"];
     const attack = stats["attack"];
@@ -73,8 +105,11 @@ function stat_focus(){
     const sp_attack = stats["special-attack"];
     const sp_defense = stats["special-defense"];
     const speed = stats["speed"];
-
+    find_worst_stat(attack, defense, sp_attack, sp_defense, speed);
     const focus_group = [hp, attack, defense, sp_attack, sp_defense, speed].sort((a,b)=>b-a);
+
+
+
     focus_group.splice(2);
 
     const result = [];
@@ -100,6 +135,8 @@ function stat_focus(){
                 break;
         }
     }
+
+    stats["focus"] = result;
     return result;
 }
 
@@ -122,6 +159,31 @@ focus:              ${stat_focus()}
     `);
 }
 
+async function get_natures(){
+    const result = [];
+    const options = [];
+    for(let key of Object.keys(natures)){
+        const nature = natures[key];
+        if(stats.focus.indexOf(nature.increases)>=0 && stats.focus.indexOf(nature.lowers)<0){
+            const decreases = nature.lowers;
+            if(stats.ignorable.indexOf(decreases)>=0){
+                result.push(key);
+            }else{
+                options.push(key);
+            }
+        }
+    }
+    console.log("Natures to concider:");
+    for(let key of result){
+        console.log(`${key}:            increases( ${chalk.green(natures[key].increases)} ) decreases( ${chalk.red(natures[key].lowers)} )`);
+    }
+
+    console.log("\nAdditional Natures:");
+    for(let key of options){
+        console.log(`${key}:            increases( ${chalk.green(natures[key].increases)} ) decreases( ${chalk.red(natures[key].lowers)} )`);
+    }
+}
+
 
 /**
  *  main function execution
@@ -132,3 +194,5 @@ await get_pokemon();
 
 console.clear();
 await form_response();
+
+await get_natures();
